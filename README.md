@@ -18,3 +18,13 @@ View your app in AI Studio: https://ai.studio/apps/65062b11-13e9-4909-976b-e4e39
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Deploy on Vercel
+
+1. Connect your GitHub repository to Vercel.
+2. In the Vercel project settings, add an environment variable:
+   - Key: `GEMINI_API_KEY`
+   - Value: `Your Gemini API Key`
+3. Vercel will automatically detect Vite and build the project.
+4. The included `vercel.json` ensures that client-side routing works correctly.
+
