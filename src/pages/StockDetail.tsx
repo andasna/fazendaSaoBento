@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Button } from "@/src/components/ui/button";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
 import { MOCK_STOCK, MOCK_STOCK_MOVEMENTS } from "@/src/lib/mock-data";
 
 export function StockDetail() {
@@ -32,9 +34,15 @@ export function StockDetail() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title={item.name}
+        subtitle={`${item.category} · ${item.unit}`}
+        onBack={() => navigate('/stock')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/stock')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -48,7 +56,7 @@ export function StockDetail() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Saldo Atual</span>
@@ -97,7 +105,40 @@ export function StockDetail() {
             Exportar Histórico
           </button>
         </div>
-        <div className="overflow-x-auto">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-indigo-500" />
+            Histórico Completo
+          </h2>
+          <button className="text-sm text-emerald-600 font-medium hover:underline">
+            Exportar Histórico
+          </button>
+        </div>
+        {/* Mobile: cards */}
+        <div className="sm:hidden">
+          <MobileCardList>
+            {itemMovements.map((mov) => (
+              <MobileCard
+                key={mov.id}
+                title={`${mov.type} — ${mov.document}`}
+                subtitle={`${format(new Date(mov.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} · ${mov.user}`}
+                detail={mov.destination ? `Destino: ${mov.destination}` : undefined}
+                badge={{ label: mov.type, variant: mov.type === 'Entrada' ? 'emerald' : 'red' }}
+                value={`${mov.type === 'Entrada' ? '+' : '-'}${mov.quantity.toLocaleString('pt-BR')} ${item.unit}`}
+                valueColor={mov.type === 'Entrada' ? 'emerald' : 'red'}
+                onClick={() => {
+                  if (mov.financialRecordId) navigate(`/financial/${mov.financialRecordId}`);
+                  else if (mov.activityId) navigate(`/activities/${mov.activityId}`);
+                }}
+              />
+            ))}
+            {itemMovements.length === 0 && (
+              <MobileCardEmpty icon={Activity} message="Nenhuma movimentação encontrada." />
+            )}
+          </MobileCardList>
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -136,7 +177,6 @@ export function StockDetail() {
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">{mov.user}</TableCell>
                   <TableCell className="text-right">
-                    {/* Botões de link para Financeiro ou Atividades dependendo da referência */}
                     {mov.financialRecordId && (
                       <button 
                         onClick={() => navigate(`/financial/${mov.financialRecordId}`)}

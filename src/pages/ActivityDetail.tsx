@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Button } from "@/src/components/ui/button";
-import { MOCK_ACTIVITIES, MOCK_TALHOES } from "@/src/lib/mock-data";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
+import { MOCK_ACTIVITIES } from "@/src/lib/mock-data";
 import { useGlobalFilters } from "../contexts/GlobalFiltersContext";
 import type { ActivityType } from "@/src/lib/types";
 
@@ -46,9 +48,15 @@ export function ActivityDetail() {
   const talhao = talhoes.find(t => t.id === activity.talhaoId);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title="Detalhes da Atividade"
+        subtitle={`${tipoInfo.label} — ${activity.cultura}`}
+        onBack={() => navigate('/activities')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/activities')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -62,7 +70,7 @@ export function ActivityDetail() {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
             <TipoIcon className={`h-4 w-4 ${tipoInfo.color.split(' ')[0]}`} />
@@ -106,7 +114,26 @@ export function ActivityDetail() {
             Insumos Utilizados
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile: cards */}
+        <div className="sm:hidden">
+          <MobileCardList>
+            {activity.produtos.map((p, idx) => (
+              <MobileCard
+                key={idx}
+                title={p.nome}
+                subtitle={`${p.quantidade.toLocaleString('pt-BR')} ${p.unidade}`}
+                value={formatBRL(p.quantidade * 10)}
+                valueColor="default"
+                hideChevron
+              />
+            ))}
+            {activity.produtos.length === 0 && (
+              <MobileCardEmpty icon={Package} message="Nenhum insumo registrado." />
+            )}
+          </MobileCardList>
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -122,17 +149,12 @@ export function ActivityDetail() {
                   <TableCell className="font-medium text-slate-900">{p.nome}</TableCell>
                   <TableCell className="text-right">{p.quantidade.toLocaleString('pt-BR')}</TableCell>
                   <TableCell className="text-slate-600">{p.unidade}</TableCell>
-                  <TableCell className="text-right text-slate-500">
-                    {/* Custo unitário mockado para exibição */}
-                    {formatBRL(p.quantidade * 10)}
-                  </TableCell>
+                  <TableCell className="text-right text-slate-500">{formatBRL(p.quantidade * 10)}</TableCell>
                 </TableRow>
               ))}
               {activity.produtos.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-10 text-slate-400">
-                    Nenhum insumo registrado para esta atividade.
-                  </TableCell>
+                  <TableCell colSpan={4} className="text-center py-10 text-slate-400">Nenhum insumo registrado.</TableCell>
                 </TableRow>
               )}
             </TableBody>

@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Button } from "@/src/components/ui/button";
-import { Modal } from "@/src/components/ui/modal";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/src/components/ui/sheet";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
 import { MOCK_HARVESTS, MOCK_HARVEST_TRIPS, MOCK_TRUCKS, MOCK_DRIVERS } from "@/src/lib/mock-data";
 import { useGlobalFilters } from "../contexts/GlobalFiltersContext";
 import type { HarvestTrip } from "@/src/lib/types";
@@ -123,14 +125,17 @@ export function HarvestDetail() {
   const talhao = harvest ? talhoesForSafra.find(t => t.id === harvest.talhaoId) : null;
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title={isNew ? 'Nova Colheita' : `${harvest?.cultura ?? 'Colheita'}`}
+        subtitle={!isNew && harvest ? format(new Date(harvest.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : undefined}
+        onBack={() => navigate('/harvest')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex flex-col sm:flex-row justify-between items-start gap-4">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/harvest')}
-            className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
-          >
+          <button onClick={() => navigate('/harvest')} className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
@@ -145,19 +150,15 @@ export function HarvestDetail() {
           </div>
         </div>
         {!isNew && (
-          <button
-            onClick={openNewTrip}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 h-10 px-4 py-2"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Registrar Viagem
+          <button onClick={openNewTrip} className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 h-10 px-4 py-2">
+            <Plus className="mr-2 h-4 w-4" />Registrar Viagem
           </button>
         )}
       </div>
 
       {/* Info do resumo */}
       {!isNew && harvest && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
           <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 mb-2">
               <Wheat className="h-4 w-4 text-amber-500" />
@@ -226,7 +227,7 @@ export function HarvestDetail() {
         </div>
       )}
 
-      {/* Tabela de viagens */}
+      {/* Viagens — mobile cards + desktop table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 className="font-semibold text-slate-900">
@@ -238,16 +239,38 @@ export function HarvestDetail() {
             )}
           </h2>
           {!isNew && (
-            <button
-              onClick={openNewTrip}
-              className="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-medium"
-            >
+            <button onClick={openNewTrip} className="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-medium">
               <Plus className="h-4 w-4 mr-1" /> Nova Viagem
             </button>
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile: MobileCards */}
+        <div className="sm:hidden">
+          <MobileCardList>
+            {trips.map(trip => {
+              const td = MOCK_DRIVERS.find(d => d.id === trip.driverId);
+              const tt = MOCK_TRUCKS.find(t => t.id === trip.truckId);
+              return (
+                <MobileCard
+                  key={trip.id}
+                  title={`${trip.origem} → ${trip.destino}`}
+                  subtitle={`${format(new Date(trip.date), "dd/MM/yyyy HH:mm", { locale: ptBR })} · ${tt?.plate ?? '—'}`}
+                  detail={`${td?.name ?? '—'} · Umid. ${trip.umidade.toFixed(1)}%`}
+                  value={formatKg(trip.pesoLiquido)}
+                  valueColor="emerald"
+                  onClick={() => openEditTrip(trip)}
+                />
+              );
+            })}
+            {trips.length === 0 && (
+              <MobileCardEmpty icon={Scale} message="Nenhuma viagem registrada." />
+            )}
+          </MobileCardList>
+        </div>
+
+        {/* Desktop: Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -299,18 +322,10 @@ export function HarvestDetail() {
                     <TableCell className="text-right text-sm">{formatBRL(trip.frete)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEditTrip(trip)}
-                          className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-                          title="Editar"
-                        >
+                        <button onClick={() => openEditTrip(trip)} className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700" title="Editar">
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => openDeleteTrip(trip)}
-                          className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
-                          title="Excluir"
-                        >
+                        <button onClick={() => openDeleteTrip(trip)} className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -323,12 +338,7 @@ export function HarvestDetail() {
                   <TableCell colSpan={11} className="text-center py-12 text-slate-400">
                     <Scale className="h-8 w-8 mx-auto mb-2 text-slate-200" />
                     <p>Nenhuma viagem registrada.</p>
-                    <button
-                      onClick={openNewTrip}
-                      className="mt-3 text-sm text-emerald-600 hover:underline"
-                    >
-                      + Registrar primeira viagem
-                    </button>
+                    <button onClick={openNewTrip} className="mt-3 text-sm text-emerald-600 hover:underline">+ Registrar primeira viagem</button>
                   </TableCell>
                 </TableRow>
               )}
@@ -337,122 +347,109 @@ export function HarvestDetail() {
         </div>
       </div>
 
-      {/* Modal de viagem */}
-      <Modal
-        isOpen={tripModal.open}
-        onClose={() => setTripModal(prev => ({ ...prev, open: false }))}
-        title={
-          tripModal.mode === 'new' ? 'Registrar Viagem' :
-          tripModal.mode === 'edit' ? 'Editar Viagem' : 'Excluir Viagem'
-        }
-      >
-        {tripModal.mode === 'delete' && (
-          <div className="space-y-4">
-            <p className="text-slate-700">Tem certeza que deseja excluir esta viagem?</p>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setTripModal(prev => ({ ...prev, open: false }))}>
-                Cancelar
-              </Button>
-              <Button variant="destructive" onClick={confirmDeleteTrip}>Excluir</Button>
-            </div>
-          </div>
-        )}
+      {/* Sheet de viagem (substitui Modal) */}
+      <Sheet open={tripModal.open} onOpenChange={(open) => { if (!open) setTripModal(prev => ({ ...prev, open: false })); }}>
+        <SheetContent side="bottom" className="max-h-[92vh] overflow-y-auto px-5 pt-4">
+          <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+          <SheetHeader className="mb-4">
+            <SheetTitle>
+              {tripModal.mode === 'new' ? 'Registrar Viagem' :
+               tripModal.mode === 'edit' ? 'Editar Viagem' : 'Excluir Viagem'}
+            </SheetTitle>
+          </SheetHeader>
 
-        {(tripModal.mode === 'new' || tripModal.mode === 'edit') && (
-          <form onSubmit={handleSaveTrip} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Data e Hora</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={formData.date}
-                  onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Peso Bruto (kg)</label>
-                <input type="number" required min="0" value={formData.pesoBruto || ''}
-                  onChange={e => setFormData(p => ({ ...p, pesoBruto: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Peso Líquido (kg)</label>
-                <input type="number" required min="0" value={formData.pesoLiquido || ''}
-                  onChange={e => setFormData(p => ({ ...p, pesoLiquido: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Umidade (%)</label>
-                <input type="number" step="0.1" min="0" max="100" value={formData.umidade || ''}
-                  onChange={e => setFormData(p => ({ ...p, umidade: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Impureza (%)</label>
-                <input type="number" step="0.1" min="0" max="100" value={formData.impureza || ''}
-                  onChange={e => setFormData(p => ({ ...p, impureza: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Descontos (kg)</label>
-                <input type="number" min="0" value={formData.descontos || ''}
-                  onChange={e => setFormData(p => ({ ...p, descontos: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Frete (R$)</label>
-                <input type="number" step="0.01" min="0" value={formData.frete || ''}
-                  onChange={e => setFormData(p => ({ ...p, frete: +e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Caminhão</label>
-                <select value={formData.truckId}
-                  onChange={e => setFormData(p => ({ ...p, truckId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="">Selecione...</option>
-                  {MOCK_TRUCKS.map(t => (
-                    <option key={t.id} value={t.id}>{t.plate} — {t.model}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Motorista</label>
-                <select value={formData.driverId}
-                  onChange={e => setFormData(p => ({ ...p, driverId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="">Selecione...</option>
-                  {MOCK_DRIVERS.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Origem</label>
-                <input type="text" required value={formData.origem}
-                  onChange={e => setFormData(p => ({ ...p, origem: e.target.value }))}
-                  placeholder="Ex: Fazenda São Bento (A1)"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Destino (silo/armazém)</label>
-                <input type="text" required value={formData.destino}
-                  onChange={e => setFormData(p => ({ ...p, destino: e.target.value }))}
-                  placeholder="Ex: Silo Central, Porto de Paranaguá"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          {tripModal.mode === 'delete' && (
+            <div className="space-y-4 pb-4">
+              <p className="text-slate-700">Tem certeza que deseja excluir esta viagem?</p>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" onClick={() => setTripModal(prev => ({ ...prev, open: false }))} className="flex-1">Cancelar</Button>
+                <Button variant="destructive" onClick={confirmDeleteTrip} className="flex-1">Excluir</Button>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" type="button" onClick={() => setTripModal(prev => ({ ...prev, open: false }))}>
-                Cancelar
-              </Button>
-              <Button type="submit">Salvar Viagem</Button>
-            </div>
-          </form>
-        )}
-      </Modal>
+          )}
+
+          {(tripModal.mode === 'new' || tripModal.mode === 'edit') && (
+            <form onSubmit={handleSaveTrip} className="space-y-4 pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Data e Hora</label>
+                  <input type="datetime-local" required value={formData.date}
+                    onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Peso Bruto (kg)</label>
+                  <input type="number" required min="0" value={formData.pesoBruto || ''}
+                    onChange={e => setFormData(p => ({ ...p, pesoBruto: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Peso Líquido (kg)</label>
+                  <input type="number" required min="0" value={formData.pesoLiquido || ''}
+                    onChange={e => setFormData(p => ({ ...p, pesoLiquido: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Umidade (%)</label>
+                  <input type="number" step="0.1" min="0" max="100" value={formData.umidade || ''}
+                    onChange={e => setFormData(p => ({ ...p, umidade: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Impureza (%)</label>
+                  <input type="number" step="0.1" min="0" max="100" value={formData.impureza || ''}
+                    onChange={e => setFormData(p => ({ ...p, impureza: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Descontos (kg)</label>
+                  <input type="number" min="0" value={formData.descontos || ''}
+                    onChange={e => setFormData(p => ({ ...p, descontos: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Frete (R$)</label>
+                  <input type="number" step="0.01" min="0" value={formData.frete || ''}
+                    onChange={e => setFormData(p => ({ ...p, frete: +e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Caminhão</label>
+                  <select value={formData.truckId} onChange={e => setFormData(p => ({ ...p, truckId: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                    <option value="">Selecione...</option>
+                    {MOCK_TRUCKS.map(t => <option key={t.id} value={t.id}>{t.plate} — {t.model}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Motorista</label>
+                  <select value={formData.driverId} onChange={e => setFormData(p => ({ ...p, driverId: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                    <option value="">Selecione...</option>
+                    {MOCK_DRIVERS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Origem</label>
+                  <input type="text" required value={formData.origem}
+                    onChange={e => setFormData(p => ({ ...p, origem: e.target.value }))} placeholder="Ex: Fazenda São Bento (A1)"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Destino</label>
+                  <input type="text" required value={formData.destino}
+                    onChange={e => setFormData(p => ({ ...p, destino: e.target.value }))} placeholder="Ex: Silo Central"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2 border-t border-slate-100">
+                <Button variant="outline" type="button" onClick={() => setTripModal(prev => ({ ...prev, open: false }))} className="flex-1">Cancelar</Button>
+                <Button type="submit" className="flex-1">Salvar Viagem</Button>
+              </div>
+            </form>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

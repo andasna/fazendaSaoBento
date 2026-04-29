@@ -7,6 +7,7 @@ import {
   DollarSign, Info, Activity, Clock, Gauge
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
 import { MOCK_FUEL } from "@/src/lib/mock-data";
 
 export function FuelDetail() {
@@ -31,9 +32,15 @@ export function FuelDetail() {
   const avgConsumption = 15.5; // L/h ou L/km mock
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title="Abastecimento"
+        subtitle={`${fuel.equipment} · ${format(new Date(fuel.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}`}
+        onBack={() => navigate('/fuel')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/fuel')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -47,7 +54,7 @@ export function FuelDetail() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Volume</span>
@@ -90,7 +97,7 @@ export function FuelDetail() {
       </div>
 
       {/* Dados Operacionais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <Activity className="h-4 w-4 text-slate-400" />

@@ -3,27 +3,29 @@ import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  ArrowLeft, Tractor, Calendar, Tag, Activity,
-  Settings, Fuel, Gauge, Clock, Info, Hammer
+  ArrowLeft, Settings, Calendar, Tag, Activity,
+  Clock, Fuel, Navigation, Info, ShieldAlert, Wrench
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Button } from "@/src/components/ui/button";
-import { MOCK_MACHINES, MOCK_FUEL } from "@/src/lib/mock-data";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
+import { MOCK_MACHINES, MOCK_FUEL, MOCK_ACTIVITIES } from "@/src/lib/mock-data";
 
 export function MachineDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const machine = MOCK_MACHINES.find(m => m.id === id);
-  // Histórico de abastecimentos desta máquina
   const machineFuel = MOCK_FUEL.filter(f => f.equipment === machine?.name).sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  const machineActivities = MOCK_ACTIVITIES.filter(a => a.observacao?.includes(machine?.name ?? '___'));
 
   if (!machine) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-        <Tractor className="h-12 w-12 mb-4" />
+        <Activity className="h-12 w-12 mb-4" />
         <p className="text-lg font-medium">Máquina não encontrada</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/admin/machines')}>
           Voltar para Máquinas
@@ -33,9 +35,15 @@ export function MachineDetail() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title={machine.name}
+        subtitle={`${machine.brand} · ${machine.type}`}
+        onBack={() => navigate('/admin/machines')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/admin/machines')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -44,16 +52,16 @@ export function MachineDetail() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{machine.name}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{machine.type} · ID: {machine.id}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{machine.brand} · {machine.type}</p>
         </div>
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status</span>
-            <div className={`h-2 w-2 rounded-full ${machine.status === 'Ativo' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            <div className={`h-2 w-2 rounded-full ${machine.status === 'Ativa' ? 'bg-emerald-500' : 'bg-red-500'}`} />
           </div>
           <p className="text-xl font-bold text-slate-900">{machine.status}</p>
         </div>
@@ -82,55 +90,80 @@ export function MachineDetail() {
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Próx. Manutenção</span>
-            <Hammer className="h-4 w-4 text-indigo-500" />
+            <Wrench className="h-4 w-4 text-indigo-500" />
           </div>
           <p className="text-xl font-bold text-slate-900 underline decoration-dotted cursor-help" title="Alerta em 54h">1.300 h</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Histórico de Abastecimentos */}
+        {/* Histórico de Manutenções */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 flex justify-between items-center">
             <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-              <Fuel className="h-4 w-4 text-orange-500" />
-              Histórico de Abastecimentos
+              <Wrench className="h-4 w-4 text-orange-500" />
+              Histórico de Manutenções
             </h2>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile: cards */}
+          <div className="sm:hidden">
+            <MobileCardList>
+              {machineActivities.map((act) => (
+                <MobileCard
+                  key={act.id}
+                  title={act.tipo === 'outros' ? 'Manutenção' : act.tipo.charAt(0).toUpperCase() + act.tipo.slice(1)}
+                  subtitle={`${format(new Date(act.date), "dd/MM/yyyy", { locale: ptBR })} · ${act.cultura}`}
+                  detail="Oficina Central"
+                  badge={{ label: 'Concluída', variant: 'emerald' }}
+                  value="R$ 1.250"
+                  valueColor="default"
+                  onClick={() => navigate(`/activities/${act.id}`)}
+                />
+              ))}
+              {machineActivities.length === 0 && (
+                <MobileCardEmpty icon={Wrench} message="Nenhuma manutenção encontrada." />
+              )}
+            </MobileCardList>
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>Operador</TableHead>
-                  <TableHead className="text-right">Litros</TableHead>
+                  <TableHead>Serviço</TableHead>
+                  <TableHead>Local / Empresa</TableHead>
+                  <TableHead className="text-right">Horímetro</TableHead>
+                  <TableHead className="text-right">Custo (R$)</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {machineFuel.map((f) => (
-                  <TableRow key={f.id}>
+                {machineActivities.map((act) => (
+                  <TableRow key={act.id}>
                     <TableCell className="text-sm text-slate-600">
-                      {format(new Date(f.date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      {format(new Date(act.date), "dd/MM/yyyy", { locale: ptBR })}
                     </TableCell>
-                    <TableCell className="text-sm">{f.employee}</TableCell>
-                    <TableCell className="text-right font-bold text-orange-600">
-                      {f.liters.toLocaleString('pt-BR')} L
+                    <TableCell className="text-sm font-medium">
+                      {act.tipo === 'outros' ? 'Manutenção' : act.tipo.charAt(0).toUpperCase() + act.tipo.slice(1)}
                     </TableCell>
+                    <TableCell className="text-sm text-slate-500">Oficina Central</TableCell>
+                    <TableCell className="text-right font-semibold text-slate-700">{act.cultura}</TableCell>
+                    <TableCell className="text-right text-red-600 font-medium">R$ 1.250</TableCell>
                     <TableCell className="text-right">
                       <button 
-                        onClick={() => navigate(`/fuel/${f.id}`)}
-                        className="text-xs text-emerald-600 hover:underline"
+                        onClick={() => navigate(`/activities/${act.id}`)}
+                        className="text-xs text-blue-600 hover:underline"
                       >
-                        Ver registro
+                        Ver Detalhes
                       </button>
                     </TableCell>
                   </TableRow>
                 ))}
-                {machineFuel.length === 0 && (
+                {machineActivities.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-10 text-slate-400 italic">
-                      Nenhum abastecimento registrado para esta máquina.
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 italic">
+                      Nenhuma manutenção registrada para este equipamento.
                     </TableCell>
                   </TableRow>
                 )}

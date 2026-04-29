@@ -70,16 +70,46 @@ body {
   color: var(--color-foreground);
 }
 
+/* ── Touch / Active States ─────────────────────────── */
 .touch-card {
-  transition: transform 0.1s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  cursor: pointer;
 }
 .touch-card:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px -1px rgba(0,0,0,0.08);
 }
 
+/* ── Safe Area ─────────────────────────────────────── */
 .pb-safe {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
+.pt-safe {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
 
+/* ── Mobile List (substitui tabelas em mobile) ──────── */
+.mobile-list {
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid hsl(214 32% 91%);
+}
+.mobile-list > * + * {
+  border-top: 1px solid hsl(214 32% 94%);
+}
+
+/* ── Scrollbar thin ────────────────────────────────── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Typography ─────────────────────────────────────── */
 .font-display { font-family: var(--font-display); }
 .font-mono    { font-family: var(--font-mono); }

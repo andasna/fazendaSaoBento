@@ -14,7 +14,6 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
-  Plus,
   DollarSign,
   Layers,
   Wheat,
@@ -23,6 +22,7 @@ import React, { useState } from "react";
 import { cn } from "@/src/lib/utils";
 import { useGlobalFilters } from "../contexts/GlobalFiltersContext";
 import { MobileBottomNav } from "./layout/MobileBottomNav";
+import { GlobalFiltersSheet } from "./layout/GlobalFiltersSheet";
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -48,12 +48,16 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
   const location = useLocation();
   const { safras, talhoesForSafra, selectedSafra, setSelectedSafra, selectedTalhao, setSelectedTalhao, getCulturaForTalhao } = useGlobalFilters();
 
+  const currentPageName =
+    navigation.find(n => n.href === location.pathname)?.name ||
+    adminNavigation.find(n => n.href === location.pathname)?.name ||
+    (location.pathname === '/profile' ? 'Perfil' : 'Fazenda São Bento');
+
   return (
     <div className="min-h-screen bg-background text-sm flex flex-col font-sans">
       {/* Desktop sidebar */}
       <div className={cn(
         "hidden sm:fixed sm:inset-y-0 sm:left-0 sm:flex sm:flex-col transition-all duration-300 z-50",
-        // Fundo suave para integrar com o background do dashboard
         "bg-[#fcfdfb] border-r border-slate-200/60",
         sidebarCollapsed ? "sm:w-16" : "sm:w-64"
       )}>
@@ -71,7 +75,7 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-thin">
-          {/* Global Filters in Sidebar - Styled like a subtle card */}
+          {/* Global Filters in Sidebar */}
           {!sidebarCollapsed && (
             <div className="space-y-4 px-1">
               <div className="bg-white/50 border border-slate-100 rounded-2xl p-3 space-y-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
@@ -144,8 +148,8 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
                     <div className="absolute left-0 w-1 h-5 bg-emerald-500 rounded-full" />
                   )}
                   <item.icon className={cn(
-                    "h-4 w-4 shrink-0 transition-colors", 
-                    !sidebarCollapsed && "mr-3", 
+                    "h-4 w-4 shrink-0 transition-colors",
+                    !sidebarCollapsed && "mr-3",
                     isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-600"
                   )} />
                   {!sidebarCollapsed && <span>{item.name}</span>}
@@ -175,8 +179,8 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
                     <div className="absolute left-0 w-1 h-5 bg-emerald-500 rounded-full" />
                   )}
                   <item.icon className={cn(
-                    "h-4 w-4 shrink-0 transition-colors", 
-                    !sidebarCollapsed && "mr-3", 
+                    "h-4 w-4 shrink-0 transition-colors",
+                    !sidebarCollapsed && "mr-3",
                     isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-600"
                   )} />
                   {!sidebarCollapsed && <span>{item.name}</span>}
@@ -210,21 +214,34 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
 
       {/* Main content */}
       <div className={cn(
-        "flex flex-col min-h-screen transition-all duration-300 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-0",
+        "flex flex-col min-h-screen transition-all duration-300",
+        // Mobile: padding bottom para o BottomNav
+        "pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0",
         sidebarCollapsed ? "sm:pl-16" : "sm:pl-64"
       )}>
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-center sm:justify-between border-b border-slate-100/60 bg-white/70 backdrop-blur-md px-4 sm:px-6 lg:px-8">
-          <div className="sm:hidden absolute left-4 text-emerald-700 font-display font-bold">
-            FSB
+        {/* Top header — mobile mostra título + GlobalFiltersSheet; desktop mostra breadcrumbs */}
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center border-b border-slate-100/60 bg-white/80 backdrop-blur-md px-4 sm:px-6 lg:px-8">
+          {/* Mobile: logo + título */}
+          <div className="sm:hidden flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-emerald-700 font-display font-black text-sm shrink-0">FSB</span>
+            <span className="text-slate-300 text-xs">·</span>
+            <h1 className="text-sm font-bold font-display text-slate-800 truncate">
+              {currentPageName}
+            </h1>
           </div>
-          <h1 className="text-base font-bold font-display text-slate-800 text-center sm:text-left">
-            {navigation.find(n => n.href === location.pathname)?.name ||
-              adminNavigation.find(n => n.href === location.pathname)?.name ||
-              (location.pathname === '/profile' ? 'Perfil do Usuário' : 'Fazenda São Bento')}
+
+          {/* Desktop: título à esquerda */}
+          <h1 className="hidden sm:block text-base font-bold font-display text-slate-800 flex-1">
+            {currentPageName}
           </h1>
+
+          {/* Desktop: Breadcrumbs à direita */}
           <div className="hidden sm:flex items-center">
             <Breadcrumbs />
           </div>
+
+          {/* Mobile: filtros globais à direita */}
+          <GlobalFiltersSheet />
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -234,17 +251,6 @@ export function Layout({ children, onLogout }: { children: React.ReactNode, onLo
 
       {/* Mobile Bottom Nav */}
       <MobileBottomNav />
-
-      {/* Global FAB */}
-      <div className="sm:hidden fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40">
-        <button
-          className="w-14 h-14 bg-emerald-600 rounded-full shadow-lg shadow-emerald-900/20 flex items-center justify-center text-white hover:bg-emerald-500 transition-all active:scale-95"
-          onClick={() => { }}
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      </div>
-
     </div>
   );
 }

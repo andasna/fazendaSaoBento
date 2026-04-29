@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { Button } from "@/src/components/ui/button";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
 import { MOCK_TRUCKS, MOCK_FUEL, MOCK_HARVEST_TRIPS } from "@/src/lib/mock-data";
 
 export function TruckDetail() {
@@ -19,8 +21,7 @@ export function TruckDetail() {
   const truckFuel = MOCK_FUEL.filter(f => f.equipment === truck?.plate).sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-  // Histórico de viagens (Colheita) deste caminhão
-  const truckTrips = MOCK_HARVEST_TRIPS.filter(t => t.truckPlate === truck?.plate).sort((a, b) => 
+  const truckTrips = MOCK_HARVEST_TRIPS.filter(t => t.truckId === truck?.id).sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
@@ -36,13 +37,19 @@ export function TruckDetail() {
     );
   }
 
-  const totalFrete = truckTrips.reduce((a, t) => a + (t.freightValue || 0), 0);
-  const totalPeso = truckTrips.reduce((a, t) => a + t.netWeight, 0);
+  const totalFrete = truckTrips.reduce((a, t) => a + (t.frete || 0), 0);
+  const totalPeso = truckTrips.reduce((a, t) => a + t.pesoLiquido, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title={truck.plate}
+        subtitle={`${truck.capacity} ton · ${truck.model}`}
+        onBack={() => navigate('/admin/trucks')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/admin/trucks')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -51,12 +58,12 @@ export function TruckDetail() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{truck.plate}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{truck.driver} · {truck.brand} {truck.model}</p>
+          <p className="text-sm text-slate-500 mt-0.5">Cap / Mod: {truck.capacity}t · {truck.model}</p>
         </div>
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Viagens Realizadas</span>
@@ -106,7 +113,27 @@ export function TruckDetail() {
             Viagens na Colheita
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile: cards */}
+        <div className="sm:hidden">
+          <MobileCardList>
+            {truckTrips.map((trip) => (
+              <MobileCard
+                key={trip.id}
+                title={`${trip.origem} → ${trip.destino}`}
+                subtitle={format(new Date(trip.date), "dd/MM/yyyy", { locale: ptBR })}
+                badge={{ label: 'Colheita', variant: 'emerald' }}
+                value={`${trip.pesoLiquido.toLocaleString('pt-BR')} kg`}
+                valueColor="default"
+                onClick={() => navigate(`/harvest/${trip.harvestId}`)}
+              />
+            ))}
+            {truckTrips.length === 0 && (
+              <MobileCardEmpty icon={Navigation} message="Nenhuma viagem encontrada." />
+            )}
+          </MobileCardList>
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -124,13 +151,13 @@ export function TruckDetail() {
                   <TableCell className="text-sm text-slate-600">
                     {format(new Date(trip.date), "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
-                  <TableCell className="text-sm font-medium">{trip.talhaoName}</TableCell>
-                  <TableCell className="text-sm">{trip.destination}</TableCell>
+                  <TableCell className="text-sm font-medium">{trip.origem}</TableCell>
+                  <TableCell className="text-sm">{trip.destino}</TableCell>
                   <TableCell className="text-right font-bold text-slate-700">
-                    {trip.netWeight.toLocaleString('pt-BR')} kg
+                    {trip.pesoLiquido.toLocaleString('pt-BR')} kg
                   </TableCell>
                   <TableCell className="text-right text-emerald-700 font-medium">
-                    {trip.freightValue ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(trip.freightValue) : '—'}
+                    {trip.frete ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(trip.frete) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     <button 

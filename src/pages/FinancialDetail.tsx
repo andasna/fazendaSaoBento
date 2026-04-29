@@ -7,6 +7,8 @@ import {
   Building2, FileText, Tag, Banknote
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
+import { MobileHeader } from "@/src/components/layout/MobileHeader";
+import { MobileCard, MobileCardList, MobileCardEmpty } from "@/src/components/ui/mobile-card";
 import { MOCK_FINANCIAL } from "@/src/lib/mock-data";
 import type { FinancialType } from "@/src/lib/types";
 
@@ -47,9 +49,15 @@ export function FinancialDetail() {
   const totalGrupo = parcelas.reduce((a, r) => a + r.valor, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Mobile Header */}
+      <MobileHeader
+        title="Detalhes Financeiro"
+        subtitle={record.descricao}
+        onBack={() => navigate('/financial')}
+      />
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={() => navigate('/financial')}
           className="text-slate-500 hover:text-slate-900 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
@@ -63,7 +71,7 @@ export function FinancialDetail() {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
             <Building2 className="h-4 w-4 text-blue-500" />
@@ -138,7 +146,31 @@ export function FinancialDetail() {
               Parcelamento — {parcelas.length}x de {formatBRL(parcelas[0].valor)}
             </h2>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="p-4 border-b border-slate-200">
+            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-blue-500" />
+              Parcelamento — {parcelas.length}x de {formatBRL(parcelas[0].valor)}
+            </h2>
+          </div>
+          {/* Mobile: cards */}
+          <div className="sm:hidden">
+            <MobileCardList>
+              {parcelas.map(p => (
+                <MobileCard
+                  key={p.id}
+                  className={p.id === record.id ? 'bg-blue-50' : ''}
+                  title={`${p.parcela}/${p.totalParcelas} — ${format(new Date(p.vencimento), "dd/MM/yyyy", { locale: ptBR })}`}
+                  subtitle={p.status === 'pago' ? 'Pago' : 'Aberto'}
+                  badge={{ label: p.status === 'pago' ? 'Pago' : 'Aberto', variant: p.status === 'pago' ? 'emerald' : 'amber' }}
+                  value={formatBRL(p.valor)}
+                  valueColor="default"
+                  onClick={() => navigate(`/financial/${p.id}`)}
+                />
+              ))}
+            </MobileCardList>
+          </div>
+          {/* Desktop: items */}
+          <div className="hidden sm:block divide-y divide-slate-100">
             {parcelas.map(p => (
               <div
                 key={p.id}
