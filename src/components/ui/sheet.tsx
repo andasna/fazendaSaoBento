@@ -76,22 +76,22 @@ export function SheetContent({
 
           {/* Sheet panel */}
           <motion.div
-            initial={side === "bottom" ? { y: "100%" } : { x: "100%" }}
-            animate={side === "bottom" ? { y: 0 } : { x: 0 }}
-            exit={side === "bottom" ? { y: "100%" } : { x: "100%" }}
+            initial={side === "bottom" ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }}
+            animate={side === "bottom" ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+            exit={side === "bottom" ? { y: "100%", opacity: 0 } : { x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className={cn(
               "fixed z-[110] bg-white shadow-2xl flex flex-col",
               side === "bottom"
-                ? "inset-x-0 bottom-0 rounded-t-3xl max-h-[92vh]"
+                ? "inset-x-0 bottom-0 rounded-t-3xl max-h-[92vh] sm:inset-0 sm:m-auto sm:h-fit sm:w-full sm:max-w-lg sm:rounded-2xl sm:max-h-[85vh] sm:!transform-none"
                 : "inset-y-0 right-0 w-80 max-w-full",
               className
             )}
           >
             {children}
-            {/* Espaçador para safe area e para garantir que o scroll passe dos botões */}
+            {/* Espaçador para safe area e para garantir que o scroll passe dos botões (apenas mobile) */}
             {side === "bottom" && (
-              <div className="w-full shrink-0" style={{ height: "max(2rem, env(safe-area-inset-bottom))" }} />
+              <div className="w-full shrink-0 sm:hidden" style={{ height: "max(2rem, env(safe-area-inset-bottom))" }} />
             )}
           </motion.div>
         </>
