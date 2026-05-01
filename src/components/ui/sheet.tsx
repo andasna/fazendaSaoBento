@@ -70,7 +70,7 @@ export function SheetContent({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
           />
 
@@ -81,18 +81,18 @@ export function SheetContent({
             exit={side === "bottom" ? { y: "100%" } : { x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className={cn(
-              "fixed z-[60] bg-white shadow-2xl",
+              "fixed z-[110] bg-white shadow-2xl flex flex-col",
               side === "bottom"
-                ? "inset-x-0 bottom-0 rounded-t-3xl"
+                ? "inset-x-0 bottom-0 rounded-t-3xl max-h-[92vh]"
                 : "inset-y-0 right-0 w-80 max-w-full",
               className
             )}
-            style={side === "bottom"
-              ? { paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }
-              : undefined
-            }
           >
             {children}
+            {/* Espaçador para safe area e para garantir que o scroll passe dos botões */}
+            {side === "bottom" && (
+              <div className="w-full shrink-0" style={{ height: "max(2rem, env(safe-area-inset-bottom))" }} />
+            )}
           </motion.div>
         </>
       )}
